@@ -144,9 +144,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             self.init_ha_discovery(mode="disable")
 
         self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
-        # self.mqtt_unsubscribe(self._on_mqtt_subscription, old_mqtt_topic_control)
-        # Why does this throw errors?
-        # ignoring old topics for now, will be unsubscribed after restart.
+        self.mqtt_unsubscribe(self._on_mqtt_subscription, old_mqtt_topic_control)        
         self.mqtt_publish(self.mqtt_topic_availability, self.available)
         self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
         self.print_current_settings()
