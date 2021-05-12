@@ -23,5 +23,8 @@ But I guess you came here because you use those things anyway.
 # Disclaimer
 I am an amateur programmer and this is my first Octoprint plugin. Please don't expect shiny code.
 
-# Screenshot of settings page
-![grafik](https://user-images.githubusercontent.com/57231822/117370982-79325a00-aec7-11eb-8ca0-77d961bb5c7c.png)
+# Screenshot Octoprint settings
+![grafik](https://github.com/oerkel47/OctoPrint-MQTT-for-PSUcontrol/blob/main/screenshot_settings.PNG)
+
+# Screenshot Home Assistant MQTT device
+![grafik](https://github.com/oerkel47/OctoPrint-MQTT-for-PSUcontrol/blob/main/screenshot_HomeAssistant.PNG)
