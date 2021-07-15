@@ -1,5 +1,5 @@
 <form class="form-horizontal">
-	<h4>Manual MQTT topics</h4>
+	<h4>Manual MQTT Settings</h4>
 	<div class="accordion-inner">
 		<div class="control-group">
 			<label class="control-label">Switch control topic</label>
@@ -17,32 +17,26 @@
 			<label class="control-label">Switch availability topic</label>
 			<div class="controls">				
 				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.mqtt_topic_availability"/>
-			</div>
-			<span class="help-block">
-				<br>
-                If you want to manually add thePSUControl switch to your MQTT setup.
-			</span>
+			</div>			
 		</div>
-	</div>
-	<h4>Messages for controlling and receiving PSU state</h4>
-	<div class="accordion-inner">		
 		<div class="control-group">
-		<label class="control-label">ON message</label>
-			<div class="controls">				
-				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.mqtt_message_On"/>
-			</div>
-		</div>	
-		<div class="control-group">
-			<label class="control-label">OFF message</label>
-			<div class="controls">				
-				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.mqtt_message_Off"/>
-			</div>
-			<span class="help-block">
-				<br>
-                Change these if your existing setup uses different values. If using with HA discovery, these values will be used but changing them will have no impact on functionality.
-			</span>
+			<label class="control-label">ON message</label>
+				<div class="controls">				
+					<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.mqtt_message_On"/>
+				</div>
+			</div>	
+			<div class="control-group">
+				<label class="control-label">OFF message</label>
+				<div class="controls">				
+					<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.mqtt_message_Off"/>
+				</div>
+				<span class="help-block">
+					<br>
+					For manually using MQTT. Can be ignored if using HomeAssistant automatic MQTT discovery feature.
+				</span>
+			</div>		
 		</div>		
-	</div>
+	
 	<h4>HomeAssistant automatic MQTT discovery</h4>
 	<div class="accordion-inner">
 		<div class="control-group">			
@@ -50,41 +44,56 @@
 			<input type="checkbox" data-bind="checked: settings.plugins.mqtt_for_psucontrol.ha_discovery_enable"> <b>activate HomeAssistant support</b>
 			</label>			
 			<span class="help-block">				 
-                If you activate this, a device with a switch will show up in your MQTT integration in HomeAssistant. 
-				<br/> 
-				The manual topics will be ignored and defaults will be used for compatibility with HA.
-				<br>
-				<br>
+                By default a device with a switch entity will show up in your MQTT integration in HomeAssistant. Manual topics will be ignored. Must be activated for below options to work.					
             </span>
-		</div>		
+		</div>
 		<div class="control-group">
 			<label class="control-label">Device name</label>
 			<div class="controls">				
-				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.ha_discovery_device_name"/>
-			</div>			
+				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.ha_discovery_device_name"/>						
+			</div>
 		</div>
 		<div class="control-group">
 			<label class="control-label">Switch name</label>
 			<div class="controls">				
 				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.ha_discovery_switch_name"/>
 			</div>
+		</div>		
+		<div class="control-group">
+			<label class="control-label">Custom Node ID</label>
+			<div class="controls">				
+				<input type="text" class="input-block-level" data-bind="value: settings.plugins.mqtt_for_psucontrol.ha_discovery_custom_NodeID"/>
+			</div>	
 				<span class="help-block">
 					<br>				
-					Here you can adjust the names you will see in HomeAssistant.
+					Changing names usually works without breaking things.
 					<br>
-					<br>
-					<br>
-					<br>
-				</span>
+				</span>			
 		</div>	
 		<div class="control-group">			
+			<label class="checkbox">
+			<input type="checkbox" data-bind="checked: settings.plugins.mqtt_for_psucontrol.ha_discovery_dont_create_device"> Don't create device
+			</label>			
+			<span class="help-block">				 
+               Use if you want a single entity instead of device with entity. Can break existing device entity in HomeAssistant.
+            </span>
+		</div>
+		<div class="control-group">			
+			<label class="checkbox">
+			<input type="checkbox" data-bind="checked: settings.plugins.mqtt_for_psucontrol.ha_discovery_merge_with_device">  Add switch entity to an existing device
+			</label>			
+			<span class="help-block">				 
+			   Use if you want to merge with an existing device (for example HomeAssistant Discovery Plugin) instead of creating a device. Set Node ID to same ID as the one you want to merge with. Can break existing device entity in HomeAssistant.
+			</span>
+		</div>		
+	</div>
+	<h4>Other</h4>
+	<div class="control-group">			
 			<label class="checkbox">
 			<input type="checkbox" data-bind="checked: settings.plugins.mqtt_for_psucontrol.ha_discovery_optimistic"> use optimistic mode for switch
 			</label>			
 			<span class="help-block">				 
-                If you use Post On Delay in PSUControl your virtual switch will bounce due to delay. If that annoys you try this workaround. 
-				It will change the way the switch works and looks though.
+                If you use Post On Delay in PSUControl your virtual switch will bounce due to delay. This is a workardound that will change the switch type to one that doesn't wait for confirmation.			
             </span>
-		</div>		
-	</div>
+	</div>		
 </form>
