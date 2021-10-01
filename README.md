@@ -7,7 +7,8 @@ This plugin interfaces between [PSU Control](https://github.com/kantlivelong/Oct
 - Supports adding the switch to existing device, for example [HomeAssistant discovery](https://github.com/cmroche/OctoPrint-HomeAssistant) plugin.
 
 ## What it does not
-- This plugin is not meant to control any other switch except the one already configured in PSU Control.
+- This plugin is not meant to control any other switch except the one already configured in PSU Control. 
+- For above mentioned scenario check out my other plugin https://github.com/oerkel47/OctoPrint-PSUControl-MQTT
 
 ## What you need
  - MQTT plugin for OctoPrint: **Be sure to use the newest version >= 0.8.10**
