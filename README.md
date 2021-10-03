@@ -1,29 +1,20 @@
-# OctoPrint-MQTT-for-PSUcontrol
-This plugin interfaces between [PSU Control](https://github.com/kantlivelong/OctoPrint-PSUControl) plugin and [MQTT](https://github.com/OctoPrint/OctoPrint-MQTT) plugin and optionally adds support for [Home Assistant](https://www.home-assistant.io) discovery. 
+# MQTT for PSUcontrol
+Exposes [PSU Control](https://github.com/kantlivelong/OctoPrint-PSUControl) switch over MQTT so you can acces it from somewhere else (example: Home Assistant).
 
-## What it does
-- Let's you control and monitor the switch that is configured in PSU Control via the MQTT protocol.
-- Supports Home Assistant discovery to integrate everything without hassle.
-- Supports adding the switch to existing device, for example [HomeAssistant discovery](https://github.com/cmroche/OctoPrint-HomeAssistant) plugin.
+Adds support for [Home Assistant](https://www.home-assistant.io) discovery for automatically integrating into HA.
 
-## What it does not
-- This plugin is not meant to control any other switch except the one already configured in PSU Control. 
-- For above mentioned scenario check out my other plugin https://github.com/oerkel47/OctoPrint-PSUControl-MQTT
+**This plugin does NOT** add support for external MQTT smart plugs
+For this you can check out a different plugin: https://github.com/oerkel47/OctoPrint-PSUControl-MQTT
 
 ## What you need
  - MQTT plugin for OctoPrint: **Be sure to use the newest version >= 0.8.10**
  - PSU Control plugin for OctoPrint
  - an MQTT broker of course
- - optional: HomeAssistant
-
-But I guess you came here because you use those things anyway.
-
+ - optional: HomeAssistant 
 
 ## Additional information
-- Should also work if PSU Control subplugins are installed. I only did a short test for the Tasmota plugin though.
-- If you run into issues, set plugin to debug and check log. There should be some good information for troubleshooting.
-- I am an amateur programmer and this is my first Octoprint plugin. Please don't expect shiny code.
-
+- Should also work if PSU Control subplugins are installed. If additional MQTT is redundant or wanted in this case is up to you.
+- If you run into issues, set plugin to debug and check logs. There should be some good information for troubleshooting.
 
 ## Screenshot of Octoprint settings
 ![grafik](screenshot_settings.PNG)
