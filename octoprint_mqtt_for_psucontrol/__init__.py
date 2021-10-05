@@ -286,7 +286,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
     def get_update_information(self):
         return dict(
             mqtt_for_psucontrol=dict(
-                displayName="MQTT for PSU Control",
+                displayName="MQTT exposure for PSU Control",
                 displayVersion=self._plugin_version,
                 type="github_release",
                 current=self._plugin_version,
@@ -297,7 +297,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         )
 
 
-__plugin_name__ = "MQTT for PSU Control"
+__plugin_name__ = "MQTT exposure for PSU Control"
 __plugin_pythoncompat__ = ">=3,<4"
 
 
