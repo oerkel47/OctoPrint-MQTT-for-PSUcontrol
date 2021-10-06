@@ -9,7 +9,8 @@ from time import sleep
 class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
                           octoprint.plugin.SettingsPlugin,
                           octoprint.plugin.TemplatePlugin,
-                          octoprint.plugin.EventHandlerPlugin):
+                          octoprint.plugin.EventHandlerPlugin,
+                          octoprint.plugin.RestartNeedingPlugin):
 
     def __init__(self):
         self.mqtt_publish = lambda *args, **kwargs: None
@@ -157,6 +158,10 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             self.isPSUOn = payload["isPSUOn"]
             self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
             self._logger.debug("updating switch state topic to {}".format(self.psu_state_to_message()))
+        elif event == Events.PLUGIN_PLUGINMANAGER_UNINSTALL_PLUGIN:
+            if payload["id"] == "mqtt_for_psucontrol":
+                self.init_ha_discovery(disable=True)
+                self._logger.debug("removing discovery before uninstalling")
 
     def on_settings_save(self, data):
         old_mqtt_topic_control = self.mqtt_topic_control
