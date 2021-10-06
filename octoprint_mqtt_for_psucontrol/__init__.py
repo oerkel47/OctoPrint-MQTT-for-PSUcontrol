@@ -135,7 +135,8 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             ha_discovery_custom_NodeID=":-)",
             ha_discovery_optimistic=False,
             ha_discovery_merge_with_device=False,
-            ha_discovery_minimal_device=False
+            ha_discovery_minimal_device=False,
+            ha_discovery_dont_create_device=False
         )
 
     def get_settings_version(self):
