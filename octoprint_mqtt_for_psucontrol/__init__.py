@@ -187,6 +187,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         # set subscriptions and update topics
         self.mqtt_unsubscribe(self._on_mqtt_subscription, old_mqtt_topic_control)
         self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
+        self.isPSUOn = self.get_psu_state()
         self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
         self.print_current_settings()  # for debugging
 
