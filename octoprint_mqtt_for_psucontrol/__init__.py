@@ -16,7 +16,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.mqtt_subscribe = lambda *args, **kwargs: None
         self.mqtt_unsubscribe = lambda *args, **kwargs: None
 
-        # ~~~~~ user controllable ~~~~~~~        
+        # ~~~~~ user controllable ~~~~~~~
         self.mqtt_topic_state = ""
         self.mqtt_topic_control = ""
         self.mqtt_message_Off = ""
@@ -28,20 +28,19 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.ha_discovery_dont_create_device = False
         self.ha_discovery_merge_with_device = False
         self.ha_discovery_optimistic = False
-        
+
         # ~~~~~~~hardcoded~~~~~~~~~
         self.available = "connected"
         self.unavailable = "disconnected"
         self.mqtt_topic_availability = "octoPrint/mqtt"
         self.ha_discovery_id = "octoprint_PSUControl_switch"
-        
+
         # ~~~~~~~dynamic~~~~~~~~~~~~~~
-        self.isPSUOn = False
-        
+        self.isPSUOn = None
 
     def on_after_startup(self):
         self.get_current_settings()
-        
+
         mqtt_helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe", "mqtt_unsubscribe")
         psu_helpers = self._plugin_manager.get_helpers("psucontrol")
 
@@ -68,11 +67,12 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.init_ha_discovery()
         self.merge_with_other_device()
         self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
+        self.isPSUOn = self.get_psu_state()
         self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
-        self._logger.debug("after startup: psu was {}  ".format(self.isPSUOn))
+        self._logger.debug("after startup: psu was {}  ".format(self.psu_state_to_message()))
 
     def get_current_settings(self):
-        # loads user settings into used variables, kind of redundant
+        # loads user settings into variables
         self.mqtt_topic_state = self._settings.get(["mqtt_topic_state"])
         self.mqtt_topic_control = self._settings.get(["mqtt_topic_control"])
         self.mqtt_message_Off = self._settings.get(["mqtt_message_Off"])
@@ -106,17 +106,15 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
         self._logger.info("mqtt: received a message for Topic {topic}. Message: {message}".format(**locals()))
         message = message.decode("utf-8")
-        self._logger.debug("Message casted into utf-8 string: {}".format(message))
+        self._logger.debug("Message decoded as utf-8 string: {}".format(message))
         if message == self.mqtt_message_Off or message == self.mqtt_message_On:
             if message == self.mqtt_message_Off and self.isPSUOn:
                 self._logger.debug("relaying OFF command to psucontrol")
                 self.turn_psu_off()
             elif message == self.mqtt_message_On and not self.isPSUOn:
                 self._logger.debug("relaying ON command to psucontrol")
-                # self.mqtt_publish(self.mqtt_topic_state, self.mqtt_message_On)
-                # optimistic to counter virtual switch bouncing due to on_delay in PSUControl
-                # doesn't work unfortunately
                 self.turn_psu_on()
+                # self.mqtt_publish(self.mqtt_topic_state, self.mqtt_message_On)  # optimistic
             else:
                 self._logger.debug("mqtt: mismatch between local and remote switch states, doing nothing.")
         else:
@@ -148,7 +146,6 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             self._settings.remove(["mqtt_topic_availability"])
             self._logger.info("Migrated to settings V2")
 
-
     def get_template_configs(self):
         return [
             dict(type="settings", custom_bindings=False)
@@ -157,9 +154,9 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
     def on_event(self, event, payload):
         if event == Events.PLUGIN_PSUCONTROL_PSU_STATE_CHANGED:
             self._logger.debug("detected psu state change event: {}".format(payload))
-            state = self.psu_state_to_message()
-            self.mqtt_publish(self.mqtt_topic_state, state)
-            self._logger.debug("updating switch state topic to {}".format(state))
+            self.isPSUOn = payload["isPSUOn"]
+            self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
+            self._logger.debug("updating switch state topic to {}".format(self.psu_state_to_message()))
 
     def on_settings_save(self, data):
         old_mqtt_topic_control = self.mqtt_topic_control
@@ -278,7 +275,6 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self._logger.debug("HA discovery payload was {}".format(payload))
 
     def psu_state_to_message(self):
-        self.isPSUOn = self.get_psu_state()
         if self.isPSUOn:
             return self.mqtt_message_On
         else:
