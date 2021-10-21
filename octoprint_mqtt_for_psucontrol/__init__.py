@@ -157,7 +157,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())        
 
     def init_ha_discovery(self):
-        if not self.ha_discovery_enable:            
+        if not self.config["ha_discovery_enable"]:            
             return
 
         device = {
