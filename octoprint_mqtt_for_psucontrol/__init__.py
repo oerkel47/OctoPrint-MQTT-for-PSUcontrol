@@ -79,26 +79,25 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             self.mqtt_topic_state = "homeassistant/switch/" + self.ha_discovery_id + "/state"
         else:
             self.mqtt_topic_control = self.config["mqtt_topic_control"]
-            self.mqtt_topic_state = self.config["mqtt_topic_control"]
+            self.mqtt_topic_state = self.config["mqtt_topic_state"]
 
 
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
+        message = message.decode("utf-8")     
         self._logger.info("mqtt: received a message for Topic {topic}. Message: {message}".format(**locals()))
-        message = message.decode("utf-8")
-        self._logger.debug("Message decoded as utf-8 string: {}".format(message))
-        if message == self.mqtt_message_Off or message == self.mqtt_message_On:
-            if message == self.mqtt_message_Off and self.isPSUOn:
+
+        if message == self.config["mqtt_message_Off"] or message == self.config["mqtt_message_On"]:
+            if message == self.config["mqtt_message_Off"] and self.isPSUOn:
                 self._logger.debug("relaying OFF command to psucontrol")
                 self.turn_psu_off()
-            elif message == self.mqtt_message_On and not self.isPSUOn:
+            elif message == self.config["mqtt_message_On"] and not self.isPSUOn:
                 self._logger.debug("relaying ON command to psucontrol")
                 self.turn_psu_on()
-                # self.mqtt_publish(self.mqtt_topic_state, self.mqtt_message_On)  # optimistic
             else:
                 self._logger.debug("mqtt: mismatch between local and remote switch states, doing nothing.")
         else:
-            self._logger.debug("mqtt: no supported message. Must be {} or {}".format(self.mqtt_message_On,
-                                                                                     self.mqtt_message_Off))
+            self._logger.debug("mqtt: no supported message. Must be {} or {}".format(self.config["mqtt_message_On"],
+                                                                                     self.config["mqtt_message_Off"]))
 
     def get_settings_defaults(self):
         return dict(
