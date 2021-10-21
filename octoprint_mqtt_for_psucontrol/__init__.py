@@ -202,9 +202,9 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
 
     def psu_state_to_message(self):
         if self.isPSUOn:
-            return self.mqtt_message_On
+            return self.config["mqtt_message_On"]
         else:
-            return self.mqtt_message_Off
+            return self.config["mqtt_message_Off"]
 
     def get_update_information(self):
         return dict(
