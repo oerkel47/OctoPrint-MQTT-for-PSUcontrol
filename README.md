@@ -1,5 +1,5 @@
 # MQTT exposure for PSUcontrol
-Exposes [PSU Control](https://github.com/kantlivelong/OctoPrint-PSUControl) switch over MQTT so you can acces it from somewhere else (example: Home Assistant).
+Exposes [PSU Control](https://github.com/kantlivelong/OctoPrint-PSUControl) switch over MQTT so you can access it from somewhere else (example: Home Assistant).
 
 Adds support for [Home Assistant](https://www.home-assistant.io) discovery for automatically integrating into HA.
 

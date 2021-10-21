@@ -13,35 +13,26 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
                           octoprint.plugin.RestartNeedingPlugin):
 
     def __init__(self):
+        # mqtt helpers
         self.mqtt_publish = lambda *args, **kwargs: None
         self.mqtt_subscribe = lambda *args, **kwargs: None
         self.mqtt_unsubscribe = lambda *args, **kwargs: None
-
-        # ~~~~~ user controllable ~~~~~~~
-        self.mqtt_topic_state = ""
-        self.mqtt_topic_control = ""
-        self.mqtt_message_Off = ""
-        self.mqtt_message_On = ""
-        self.ha_discovery_switch_name = ""
-        self.ha_discovery_device_name = ""
-        self.ha_discovery_custom_NodeID = ""
-        self.ha_discovery_enable = False
-        self.ha_discovery_dont_create_device = False
-        self.ha_discovery_merge_with_device = False
-        self.ha_discovery_optimistic = False
-
-        # ~~~~~~~hardcoded~~~~~~~~~
+        # hardcoded
         self.available = "connected"
-        self.unavailable = "disconnected"
+        self.unavailable = "disconnected"        
         self.mqtt_topic_availability = "octoPrint/mqtt"
         self.ha_discovery_id = "octoprint_PSUControl_switch"
-
-        # ~~~~~~~dynamic~~~~~~~~~~~~~~
+        self.device_manufacturer = "oerkel47"
+        self.unique_id = self.ha_discovery_id + "_uniqueID" 
+        self.discoverytopic = "homeassistant/switch/" + self.ha_discovery_id + "/config"       
+        # user controllable
+        self.config = dict()
+        self.mqtt_topic_state = ""
+        self.mqtt_topic_control = ""        
+        # dynamic
         self.isPSUOn = None
 
     def on_after_startup(self):
-        self.get_current_settings()
-
         mqtt_helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe", "mqtt_unsubscribe")
         psu_helpers = self._plugin_manager.get_helpers("psucontrol")
 
@@ -65,62 +56,48 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         else:
             self._logger.info("psucontrol helpers not found..plugin won't work")
 
+        self.reload_settings()
         self.init_ha_discovery()
-        self.merge_with_other_device()
+        
         self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
         self.isPSUOn = self.get_psu_state()
         self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
         self._logger.debug("after startup: psu was {}  ".format(self.psu_state_to_message()))
 
-    def get_current_settings(self):
-        # loads user settings into variables
-        self.mqtt_topic_state = self._settings.get(["mqtt_topic_state"])
-        self.mqtt_topic_control = self._settings.get(["mqtt_topic_control"])
-        self.mqtt_message_Off = self._settings.get(["mqtt_message_Off"])
-        self.mqtt_message_On = self._settings.get(["mqtt_message_On"])
-        self.ha_discovery_enable = self._settings.get_boolean(["ha_discovery_enable"])
-        self.ha_discovery_switch_name = self._settings.get(["ha_discovery_switch_name"])
-        self.ha_discovery_device_name = self._settings.get(["ha_discovery_device_name"])
-        self.ha_discovery_optimistic = self._settings.get(["ha_discovery_optimistic"])
-        self.ha_discovery_custom_NodeID = self._settings.get(["ha_discovery_custom_NodeID"])
-        self.ha_discovery_dont_create_device = self._settings.get(["ha_discovery_dont_create_device"])
-        self.ha_discovery_merge_with_device = self._settings.get(["ha_discovery_merge_with_device"])
+    def reload_settings(self):
+        for k, v in self.get_settings_defaults().items():           
+            if type(v) == bool:
+                v = self._settings.get_boolean([k])
+            else:
+                v = self._settings.get([k])
 
-    def print_current_settings(self):
-        # lists settings for debugging
-        self._logger.debug("~~~~ current settings: ~~~~~")
-        self._logger.debug("mqtt_topic_state = {}".format(self.mqtt_topic_state))
-        self._logger.debug("mqtt_topic_control = {}".format(self.mqtt_topic_control))
-        self._logger.debug("mqtt_topic_availability = {}".format(self.mqtt_topic_availability))
-        self._logger.debug("mqtt_message_Off = {}".format(self.mqtt_message_Off))
-        self._logger.debug("mqtt_message_On = {}".format(self.mqtt_message_On))
-        self._logger.debug("HA discovery = {}".format(self.ha_discovery_enable))
-        self._logger.debug("ha_discovery_switch_name = {}".format(self.ha_discovery_switch_name))
-        self._logger.debug("ha_discovery_device_name = {}".format(self.ha_discovery_device_name))
-        self._logger.debug("ha_discovery_optimistic = {}".format(self.ha_discovery_optimistic))
-        self._logger.debug("ha_discovery_id = {}".format(self.ha_discovery_id))
-        self._logger.debug("ha_discovery_custom_NodeID = {}".format(self.ha_discovery_custom_NodeID))
-        self._logger.debug("ha_discovery_dont_create_device = {}".format(self.ha_discovery_dont_create_device))
-        self._logger.debug("ha_discovery_merge_with_device = {}".format(self.ha_discovery_merge_with_device))
-        self._logger.debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            self.config[k] = v
+            self._logger.debug("{}: {}".format(k, v))
+
+        if self.config["ha_discovery_enable"]:  # overwrite values for HA discovery
+            self.mqtt_topic_control = "homeassistant/switch/" + self.ha_discovery_id + "/set"
+            self.mqtt_topic_state = "homeassistant/switch/" + self.ha_discovery_id + "/state"
+        else:
+            self.mqtt_topic_control = self.config["mqtt_topic_control"]
+            self.mqtt_topic_state = self.config["mqtt_topic_state"]
+
 
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
+        message = message.decode("utf-8")     
         self._logger.info("mqtt: received a message for Topic {topic}. Message: {message}".format(**locals()))
-        message = message.decode("utf-8")
-        self._logger.debug("Message decoded as utf-8 string: {}".format(message))
-        if message == self.mqtt_message_Off or message == self.mqtt_message_On:
-            if message == self.mqtt_message_Off and self.isPSUOn:
+
+        if message == self.config["mqtt_message_Off"] or message == self.config["mqtt_message_On"]:
+            if message == self.config["mqtt_message_Off"] and self.isPSUOn:
                 self._logger.debug("relaying OFF command to psucontrol")
                 self.turn_psu_off()
-            elif message == self.mqtt_message_On and not self.isPSUOn:
+            elif message == self.config["mqtt_message_On"] and not self.isPSUOn:
                 self._logger.debug("relaying ON command to psucontrol")
                 self.turn_psu_on()
-                # self.mqtt_publish(self.mqtt_topic_state, self.mqtt_message_On)  # optimistic
             else:
                 self._logger.debug("mqtt: mismatch between local and remote switch states, doing nothing.")
         else:
-            self._logger.debug("mqtt: no supported message. Must be {} or {}".format(self.mqtt_message_On,
-                                                                                     self.mqtt_message_Off))
+            self._logger.debug("mqtt: no supported message. Must be {} or {}".format(self.config["mqtt_message_On"],
+                                                                                     self.config["mqtt_message_Off"]))
 
     def get_settings_defaults(self):
         return dict(
@@ -142,8 +119,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         return 2
 
     def on_settings_migrate(self, target, current):
-        if current == 1:
-            self.mqtt_topic_availability = "octoPrint/mqtt"
+        if current == 1:            
             self._settings.remove(["mqtt_topic_availability"])
             self._logger.info("Migrated to settings V2")
 
@@ -158,61 +134,40 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             self.isPSUOn = payload["isPSUOn"]
             self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
             self._logger.debug("updating switch state topic to {}".format(self.psu_state_to_message()))
-        elif event == Events.PLUGIN_PLUGINMANAGER_UNINSTALL_PLUGIN:
+        elif event == Events.PLUGIN_PLUGINMANAGER_UNINSTALL_PLUGIN: # this works with restart needing plugins
             if payload["id"] == "mqtt_for_psucontrol":
-                self.init_ha_discovery(disable=True)
-                self._logger.debug("removing discovery before uninstalling")
-
-    def on_settings_save(self, data):
-        old_mqtt_topic_control = self.mqtt_topic_control
-        old_ha_discovery_enable = self.ha_discovery_enable
-        old_ha_discovery_merge_with_device = self.ha_discovery_merge_with_device
-        old_ha_discovery_dont_create_device = self.ha_discovery_dont_create_device
-        octoprint.plugin.SettingsPlugin.on_settings_save(self, data)  # load current values from  settings
-        self.get_current_settings()  # load settings to variables that are being used
-
-        if old_ha_discovery_enable != self.ha_discovery_enable and not self.ha_discovery_enable:
-            self.init_ha_discovery(disable=True)
-            self.merge_with_other_device(disable=True)
-        if old_ha_discovery_merge_with_device != self.ha_discovery_merge_with_device and not self.ha_discovery_merge_with_device:
-            self.merge_with_other_device(disable=True)
-        if old_ha_discovery_dont_create_device != self.ha_discovery_dont_create_device and not self.ha_discovery_dont_create_device:
-            self.init_ha_discovery(disable=True)
-        if self.ha_discovery_dont_create_device or self.ha_discovery_merge_with_device:
-            self.init_ha_discovery(disable=True)
-
+                self.remove_ha_discovery()
+                self._logger.debug("on event: removing discovery before uninstalling")
+        elif event == Events.PLUGIN_PLUGINMANAGER_DISABLE_PLUGIN:  # this works with restart needing plugins
+            if payload["id"] == "mqtt_for_psucontrol":
+                self.remove_ha_discovery()
+                self._logger.debug("on event: removing discovery before disabling")
+                
+    def on_plugin_pending_uninstall(self):  # this will work in some next release of octoprint
+        self._logger.debug("callback: removing discovery before uninstalling")
+        self.remove_ha_discovery()
+    
+    def on_settings_save(self, data):        
+        octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+        self.remove_ha_discovery()
+        self.mqtt_unsubscribe(self._on_mqtt_subscription, self.mqtt_topic_control)
+        self.reload_settings() # get new settings
+        self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)       
         self.init_ha_discovery()
-        self.merge_with_other_device()
-
-        # set subscriptions and update topics
-        self.mqtt_unsubscribe(self._on_mqtt_subscription, old_mqtt_topic_control)
-        self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
+                
         self.isPSUOn = self.get_psu_state()
-        self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
-        self.print_current_settings()  # for debugging
+        self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())        
 
-    def init_ha_discovery(self, disable=False):
-        unique_id = self.ha_discovery_id + "_uniqueID"  # unique ID, necessary for autodiscovery
-        discoverytopic = "homeassistant/switch/" + self.ha_discovery_id + "/config"
-        device_manufacturer = "oerkel47"
-        device_model = self._plugin_name
-
-        if disable:
-            self.mqtt_publish(discoverytopic, {})
-            self._logger.debug("Sending empty payload to delete discovery")
+    def init_ha_discovery(self):
+        if not self.config["ha_discovery_enable"]:
             return
-        elif not self.ha_discovery_enable or self.ha_discovery_merge_with_device:
-            return
-
-        self.mqtt_topic_state = "homeassistant/switch/" + self.ha_discovery_id + "/state"
-        self.mqtt_topic_control = "homeassistant/switch/" + self.ha_discovery_id + "/set"
 
         device = {
-            "name": self.ha_discovery_device_name,
-            "ids": self.ha_discovery_id,
+            "name": self.config["ha_discovery_device_name"],
+            "ids":  self.ha_discovery_id,
             "sw_version": "Plugin version " + self._plugin_version,
-            "manufacturer": device_manufacturer,
-            "model": device_model
+            "manufacturer": self.device_manufacturer,
+            "model": self._plugin_name
         }
 
         availability = {
@@ -223,68 +178,35 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         payload = {
             "device": device,
             "availability": availability,
-            "name": self.ha_discovery_switch_name,
-            "unique_id": unique_id,
+            "name": self.config["ha_discovery_switch_name"],
+            "unique_id": self.unique_id,
             "command_topic": self.mqtt_topic_control,
             "state_topic": self.mqtt_topic_state,
-            "payload_on": self.mqtt_message_On,
-            "payload_off": self.mqtt_message_Off,
+            "payload_on": self.config["mqtt_message_On"],
+            "payload_off": self.config["mqtt_message_Off"],
             "optimistic": False
         }
 
-        if self.ha_discovery_optimistic:
+        if self.config["ha_discovery_optimistic"]:
             payload["optimistic"] = True
-        if self.ha_discovery_dont_create_device:
+        if self.config["ha_discovery_merge_with_device"]:
+             payload["device"] = {"ids": self.config["ha_discovery_custom_NodeID"]}
+        if self.config["ha_discovery_dont_create_device"]:
             del payload["device"]
 
         self._logger.debug("Enabling/Updating HA discovery feature")
-        self.mqtt_publish(discoverytopic, payload)  # updating/creating discovery
+        self.mqtt_publish(self.discoverytopic, payload)  # updating/creating discovery
         self._logger.debug("HA discovery payload was {}".format(payload))
 
-    def merge_with_other_device(self, disable=False):
-        unique_id = self.ha_discovery_custom_NodeID + "_PSU_CONTROL_SWITCH"  # unique ID, necessary for autodiscovery
-        discoverytopic = "homeassistant/switch/" + unique_id + "/config"
-
-        if disable:
-            self.mqtt_publish(discoverytopic, {})
-            self._logger.debug("Sending empty payload to delete merged entity from external device")
-            return
-        elif not self.ha_discovery_enable or not self.ha_discovery_merge_with_device:
-            return
-
-        self.mqtt_topic_state = "homeassistant/switch/" + unique_id + "/state"
-        self.mqtt_topic_control = "homeassistant/switch/" + unique_id + "/set"
-
-        device = {"ids": self.ha_discovery_custom_NodeID}  # only use id to keep existing names etc
-
-        availability = {
-            "topic": self.mqtt_topic_availability,
-            "payload_available": self.available,
-            "payload_not_available": self.unavailable
-        }
-        payload = {
-            "device": device,
-            "availability": availability,
-            "name": self.ha_discovery_switch_name,
-            "unique_id": unique_id,
-            "command_topic": self.mqtt_topic_control,
-            "state_topic": self.mqtt_topic_state,
-            "payload_on": self.mqtt_message_On,
-            "payload_off": self.mqtt_message_Off,
-            "optimistic": False
-        }
-
-        if self.ha_discovery_optimistic:
-            payload["optimistic"] = True
-
-        self.mqtt_publish(discoverytopic, payload)  # updating/creating discovery
-        self._logger.debug("HA discovery payload was {}".format(payload))
+    def remove_ha_discovery(self):    
+        self.mqtt_publish(self.discoverytopic, {})
+        self._logger.debug("Sending empty payload to delete discovery")
 
     def psu_state_to_message(self):
         if self.isPSUOn:
-            return self.mqtt_message_On
+            return self.config["mqtt_message_On"]
         else:
-            return self.mqtt_message_Off
+            return self.config["mqtt_message_Off"]
 
     def get_update_information(self):
         return dict(
