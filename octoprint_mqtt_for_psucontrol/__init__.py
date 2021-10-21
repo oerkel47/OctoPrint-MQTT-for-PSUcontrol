@@ -185,9 +185,9 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         }
 
         if self.config["ha_discovery_optimistic"]:
-            payload["optimistic"] = True       
+            payload["optimistic"] = True
         if self.config["ha_discovery_merge_with_device"]:
-             device = {"ids": self.config["ha_discovery_custom_NodeID"]}
+             payload["device"] = {"ids": self.config["ha_discovery_custom_NodeID"]}
         if self.config["ha_discovery_dont_create_device"]:
             del payload["device"]
 
