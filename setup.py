@@ -5,8 +5,8 @@
 plugin_identifier = "mqtt_for_psucontrol"
 plugin_package = "octoprint_%s" % plugin_identifier
 plugin_name = "MQTT for PSU Control"
-plugin_version = "1.1.0"
-plugin_description = "MQTT and Home Assistant support for PSU Control"
+plugin_version = "1.2.0"
+plugin_description = "Control your PSU Control with MQTT or Home Assistant"
 plugin_author = "oerkel47"
 plugin_author_email = ""
 plugin_url = "https://github.com/oerkel47/OctoPrint-MQTT-for-PSUcontrol"
@@ -30,7 +30,7 @@ plugin_ignored_packages = []
 # Example:
 #     plugin_requires = ["someDependency==dev"]
 #     additional_setup_parameters = {"dependency_links": ["https://github.com/someUser/someRepo/archive/master.zip#egg=someDependency-dev"]}
-additional_setup_parameters = {}
+additional_setup_parameters = {"python_requires": ">=3, <4"}
 
 ########################################################################################################################
 
