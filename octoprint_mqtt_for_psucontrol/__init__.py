@@ -20,15 +20,15 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         # hardcoded
         self.available = "connected"
         self.unavailable = "disconnected"        
-        self.mqtt_topic_availability = "octoPrint/mqtt"
         self.ha_discovery_id = "octoprint_PSUControl_switch"
         self.device_manufacturer = "oerkel47"
         self.unique_id = self.ha_discovery_id + "_uniqueID" 
-        self.discoverytopic = "homeassistant/switch/" + self.ha_discovery_id + "/config"       
+        self.discoverytopic = "homeassistant/switch/" + self.ha_discovery_id + "/config"
         # user controllable
         self.config = dict()
         self.mqtt_topic_state = ""
-        self.mqtt_topic_control = ""        
+        self.mqtt_topic_control = ""
+        self.mqtt_topic_availability = ""
         # dynamic
         self.isPSUOn = None
 
@@ -72,7 +72,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
                 v = self._settings.get([k])
 
             self.config[k] = v
-            self._logger.debug("{}: {}".format(k, v))
+            self._logger.debug("{}: {}".format(k, v))        
 
         if self.config["ha_discovery_enable"]:  # overwrite values for HA discovery
             self.mqtt_topic_control = "homeassistant/switch/" + self.ha_discovery_id + "/set"
@@ -80,6 +80,16 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         else:
             self.mqtt_topic_control = self.config["mqtt_topic_control"]
             self.mqtt_topic_state = self.config["mqtt_topic_state"]
+        
+        try:
+            lwTopic = octoprint.settings.settings().get(["plugins", "mqtt", "publish", "lwTopic"])
+            baseTopic = octoprint.settings.settings().get(["plugins", "mqtt", "publish", "baseTopic"])
+            self.mqtt_topic_availability = baseTopic + lwTopic
+        except Exception:
+            self._logger.error("Could not Load MQTT settings from mqtt plugin. Is it installed?")
+        else:        
+            self._logger.debug("Last will topic: " + self.mqtt_topic_availability)
+        
 
 
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
