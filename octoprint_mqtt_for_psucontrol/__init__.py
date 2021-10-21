@@ -156,7 +156,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())        
 
     def init_ha_discovery(self):
-        if not self.config["ha_discovery_enable"]:            
+        if not self.config["ha_discovery_enable"]:
             return
 
         device = {
@@ -185,11 +185,11 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         }
 
         if self.config["ha_discovery_optimistic"]:
-            payload["optimistic"] = True
+            payload["optimistic"] = True       
+        if self.config["ha_discovery_merge_with_device"]:
+             device = {"ids": self.config["ha_discovery_custom_NodeID"]}
         if self.config["ha_discovery_dont_create_device"]:
             del payload["device"]
-        elif self.config["ha_discovery_merge_with_device"]:
-             device = {"ids": self.config["ha_discovery_custom_NodeID"]}
 
         self._logger.debug("Enabling/Updating HA discovery feature")
         self.mqtt_publish(self.discoverytopic, payload)  # updating/creating discovery
