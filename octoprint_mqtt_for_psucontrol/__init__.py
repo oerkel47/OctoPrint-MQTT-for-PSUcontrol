@@ -59,9 +59,9 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.reload_settings()
         self.init_ha_discovery()
         
-        self.mqtt_subscribe(self.config["mqtt_topic_control"], self._on_mqtt_subscription)
+        self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
         self.isPSUOn = self.get_psu_state()
-        self.mqtt_publish(self.config["mqtt_topic_state"], self.psu_state_to_message())
+        self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
         self._logger.debug("after startup: psu was {}  ".format(self.psu_state_to_message()))
 
     def reload_settings(self):
