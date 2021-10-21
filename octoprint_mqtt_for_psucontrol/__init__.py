@@ -134,14 +134,17 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             self.isPSUOn = payload["isPSUOn"]
             self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
             self._logger.debug("updating switch state topic to {}".format(self.psu_state_to_message()))
-
-
-    def on_plugin_disabled(self):
-        self._logger.debug("removing discovery before disabling")
-        self.remove_ha_discovery()
-
-    def on_plugin_pending_uninstall(self):
-        self._logger.debug("removing discovery before uninstalling")
+        elif event == Events.PLUGIN_PLUGINMANAGER_UNINSTALL_PLUGIN: # this works with restart needing plugins
+            if payload["id"] == "mqtt_for_psucontrol":
+                self.remove_ha_discovery()
+                self._logger.debug("on event: removing discovery before uninstalling")
+        elif event == Events.PLUGIN_PLUGINMANAGER_DISABLE_PLUGIN:  # this works with restart needing plugins
+            if payload["id"] == "mqtt_for_psucontrol":
+                self.remove_ha_discovery()
+                self._logger.debug("on event: removing discovery before disabling")
+                
+    def on_plugin_pending_uninstall(self):  # this will work in some next release of octoprint
+        self._logger.debug("callback: removing discovery before uninstalling")
         self.remove_ha_discovery()
     
     def on_settings_save(self, data):        
