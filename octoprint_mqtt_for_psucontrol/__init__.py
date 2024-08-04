@@ -61,8 +61,8 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         
         self.mqtt_subscribe(self.mqtt_topic_control, self._on_mqtt_subscription)
         self.isPSUOn = self.get_psu_state()
-        self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
         self._logger.debug("after startup: psu was {}  ".format(self.psu_state_to_message()))
+        self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message(), allow_queueing=True)
 
     def reload_settings(self):
         for k, v in self.get_settings_defaults().items():           
@@ -86,7 +86,7 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
             baseTopic = octoprint.settings.settings().get(["plugins", "mqtt", "publish", "baseTopic"])
             self.mqtt_topic_availability = baseTopic + lwTopic
         except Exception:
-            self._logger.error("Could not Load MQTT settings from mqtt plugin. Is it installed?")
+            self._logger.warning("Could not Load MQTT settings from mqtt plugin. Is it installed?")
         else:        
             self._logger.debug("Last will topic: " + self.mqtt_topic_availability)
         
@@ -142,8 +142,8 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         if event == Events.PLUGIN_PSUCONTROL_PSU_STATE_CHANGED:
             self._logger.debug("detected psu state change event: {}".format(payload))
             self.isPSUOn = payload["isPSUOn"]
-            self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message())
             self._logger.debug("updating switch state topic to {}".format(self.psu_state_to_message()))
+            self.mqtt_publish(self.mqtt_topic_state, self.psu_state_to_message(),allow_queueing=True)
         elif event == Events.PLUGIN_PLUGINMANAGER_UNINSTALL_PLUGIN: # this works with restart needing plugins
             if payload["id"] == "mqtt_for_psucontrol":
                 self.remove_ha_discovery()

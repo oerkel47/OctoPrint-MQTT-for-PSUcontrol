@@ -5,7 +5,7 @@
 plugin_identifier = "mqtt_for_psucontrol"
 plugin_package = "octoprint_%s" % plugin_identifier
 plugin_name = "MQTT for PSU Control"
-plugin_version = "1.2.0"
+plugin_version = "1.2.1"
 plugin_description = "Control your PSU Control with MQTT or Home Assistant"
 plugin_author = "oerkel47"
 plugin_author_email = ""
