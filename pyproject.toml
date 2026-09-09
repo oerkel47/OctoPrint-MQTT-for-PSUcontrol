@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools>=68",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MQTT-for-PSU-Control"
+version = "1.2.1"
+description = "Control your PSU Control with MQTT or Home Assistant"
+authors = [
+    { name = "oerkel47" },
+]
+requires-python = ">=3, <4"
+dependencies = []
+dynamic = [
+    "license",
+]
+
+[project.entry-points."octoprint.plugin"]
+mqtt_for_psucontrol = "octoprint_mqtt_for_psucontrol"
+
+[project.urls]
+Homepage = "https://github.com/oerkel47/OctoPrint-MQTT-for-PSUcontrol"
+
+[project.optional-dependencies]
+develop = [
+    "go-task-bin",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = [
+    "octoprint_mqtt_for_psucontrol",
+    "octoprint_mqtt_for_psucontrol.*",
+]

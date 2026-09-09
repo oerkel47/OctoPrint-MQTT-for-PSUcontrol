@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_mqtt_for_psucontrol/templates *
+recursive-include octoprint_mqtt_for_psucontrol/translations *
+recursive-include octoprint_mqtt_for_psucontrol/static *
