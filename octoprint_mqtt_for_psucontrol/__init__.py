@@ -31,6 +31,9 @@ class mqtt_for_psucontrol(octoprint.plugin.StartupPlugin,
         self.mqtt_topic_availability = ""
         # dynamic
         self.isPSUOn = None
+        
+    def is_template_autoescaped(self):
+        return True
 
     def on_after_startup(self):
         mqtt_helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe", "mqtt_unsubscribe")
